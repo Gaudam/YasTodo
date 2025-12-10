@@ -40,6 +40,19 @@
             color-scheme: dark;
         }
 
+        /* --- CRUCIAL FIX FOR CALENDAR BUTTON --- */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            cursor: pointer;
+            opacity: 0;
+        }
+
         /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(5px); }
@@ -52,7 +65,7 @@
 </head>
 <body class="h-[100dvh] w-full flex flex-col overflow-hidden selection:bg-blue-500 selection:text-white">
 
-    <!-- Legend Modal (Hidden by default) -->
+    <!-- Legend Modal -->
     <div id="legend-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-[#1E293B] border border-slate-600 p-6 rounded-2xl max-w-sm w-full shadow-2xl animate-fade-in">
             <div class="flex justify-between items-center mb-4">
@@ -90,7 +103,7 @@
         
         <!-- Header -->
         <header class="pt-4 pb-2 px-4 bg-[#0F172A]/95 backdrop-blur-sm border-b border-slate-700 shrink-0 z-20">
-            <div class="flex justify-between items-center mb-2">
+            <div class="flex justify-between items-center mb-3">
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="text-3xl font-bold tracking-wide text-blue-100">Mijn Bujo</h1>
@@ -112,15 +125,37 @@
                 </div>
             </div>
             
-            <!-- Controls -->
-            <div class="flex justify-between items-center mt-2 gap-2">
+            <!-- Filter & Sort Controls Row 1 -->
+            <div class="flex justify-between items-center gap-2 mb-2">
                 <div class="flex bg-slate-800 rounded-lg p-1">
-                    <button id="btn-filter-all" onclick="setFilter('all')" class="px-3 py-1 rounded-md text-sm transition-colors bg-blue-600 text-white shadow">Alles</button>
-                    <button id="btn-filter-todo" onclick="setFilter('todo')" class="px-3 py-1 rounded-md text-sm transition-colors text-slate-400 hover:text-slate-200">Open</button>
+                    <button id="btn-status-all" onclick="setFilterStatus('all')" class="px-3 py-1 rounded-md text-sm transition-colors bg-blue-600 text-white shadow">Alles</button>
+                    <button id="btn-status-todo" onclick="setFilterStatus('todo')" class="px-3 py-1 rounded-md text-sm transition-colors text-slate-400 hover:text-slate-200">Open</button>
                 </div>
 
-                <button id="btn-sort" onclick="toggleSort()" class="p-2 rounded-lg border transition-all bg-yellow-900/30 border-yellow-600/50 text-yellow-300">
-                    <i data-lucide="star" class="w-4 h-4 fill-yellow-500"></i>
+                <!-- Sort Toggle -->
+                <div class="flex bg-slate-800 rounded-lg p-1">
+                    <button id="btn-sort-date" onclick="setSortMode('date')" class="p-1.5 rounded-md transition-colors text-slate-400 hover:text-white" title="Sorteer op Datum">
+                        <i data-lucide="calendar-days" class="w-4 h-4"></i>
+                    </button>
+                    <button id="btn-sort-priority" onclick="setSortMode('priority')" class="p-1.5 rounded-md transition-colors text-yellow-400 bg-slate-700 shadow" title="Sorteer op Favorieten">
+                        <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Type Filter Row 2 -->
+            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                <button id="btn-type-all" onclick="setFilterType('all')" class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-blue-900/40 text-blue-200 border border-blue-700/50 whitespace-nowrap">
+                    <i data-lucide="layers" class="w-3 h-3"></i> Alles
+                </button>
+                <button id="btn-type-task" onclick="setFilterType('task')" class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700 whitespace-nowrap">
+                    <div class="w-2 h-2 rounded-full bg-blue-400"></div> Taken
+                </button>
+                <button id="btn-type-event" onclick="setFilterType('event')" class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700 whitespace-nowrap">
+                    <i data-lucide="circle" class="w-3 h-3"></i> Events
+                </button>
+                <button id="btn-type-note" onclick="setFilterType('note')" class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700 whitespace-nowrap">
+                    <i data-lucide="minus" class="w-3 h-3"></i> Notities
                 </button>
             </div>
         </header>
@@ -130,14 +165,14 @@
             <!-- Empty State -->
             <div id="empty-state" class="hidden flex-col items-center justify-center h-60 text-slate-500 text-center px-4">
                 <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4 text-slate-600">
-                    <i data-lucide="edit-2" class="w-8 h-8"></i>
+                    <i data-lucide="filter-x" class="w-8 h-8"></i>
                 </div>
-                <p class="text-xl mb-1 text-slate-300">Alles is leeg.</p>
-                <p class="text-sm">Klik hieronder op '+' om te beginnen.</p>
+                <p class="text-xl mb-1 text-slate-300">Geen items gevonden.</p>
+                <p class="text-sm">Pas je filters aan of voeg iets toe.</p>
             </div>
 
             <!-- Entries List Container -->
-            <div id="entries-list" class="space-y-6 pb-24 hidden"></div>
+            <div id="entries-list" class="space-y-1 pb-24 hidden"></div>
         </div>
 
         <!-- Input Area -->
@@ -172,12 +207,14 @@
                     <div class="relative flex-1">
                         <input type="text" id="input-text" placeholder="Typ hier..." class="w-full pl-4 pr-4 py-3.5 text-lg bg-[#1E293B] border border-slate-600 rounded-xl focus:border-blue-500 focus:outline-none text-white placeholder:text-slate-500">
                     </div>
-                    <div class="relative w-14">
-                        <input type="date" id="input-date" class="absolute inset-0 opacity-0 z-10 w-full h-full cursor-pointer">
-                        <div class="w-full h-full bg-[#1E293B] border border-slate-600 rounded-xl flex items-center justify-center text-slate-400">
-                            <i data-lucide="calendar" class="w-6 h-6"></i>
-                        </div>
+                    
+                    <!-- Calendar Button -->
+                    <div class="relative w-14 bg-[#1E293B] border border-slate-600 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 transition-colors cursor-pointer group">
+                        <i data-lucide="calendar" class="w-6 h-6 group-hover:scale-110 transition-transform pointer-events-none relative z-0"></i>
+                        <!-- The input is absolutely positioned and has high Z-index to catch ALL clicks -->
+                        <input type="date" id="input-date" class="absolute inset-0 w-full h-full opacity-0 z-50 cursor-pointer">
                     </div>
+
                     <button type="submit" id="btn-submit" disabled class="w-14 bg-blue-600 text-white rounded-xl flex items-center justify-center hover:bg-blue-500 disabled:opacity-30 disabled:hover:bg-blue-600 active:scale-95 transition-all">
                         <i data-lucide="plus" class="w-7 h-7"></i>
                     </button>
@@ -186,13 +223,14 @@
         </div>
     </div>
 
-    <!-- Application Script (Local Storage Version) -->
+    <!-- Application Script -->
     <script>
         // --- State Management ---
         const state = {
             entries: [],
-            filter: 'all', // 'all' | 'todo'
-            sortByPriority: true,
+            filterStatus: 'all', // 'all' | 'todo'
+            filterType: 'all',   // 'all' | 'task' | 'event' | 'note'
+            sortMode: 'priority', // 'priority' | 'date'
             editingId: null,
             // Edit form state
             editForm: {
@@ -208,7 +246,7 @@
         function saveData() {
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(state.entries));
-                renderStats(); // Update stats immediately
+                renderStats(); 
             } catch (e) {
                 console.error("Kon niet opslaan:", e);
                 alert("Let op: opslag is vol of geblokkeerd.");
@@ -220,7 +258,6 @@
                 const raw = localStorage.getItem(STORAGE_KEY);
                 if (raw) {
                     const parsed = JSON.parse(raw);
-                    // Convert date strings back to Date objects
                     state.entries = parsed.map(entry => ({
                         ...entry,
                         targetDate: new Date(entry.targetDate),
@@ -233,37 +270,23 @@
             }
         }
 
-        // --- Icons Helper ---
         function refreshIcons() {
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
         }
 
-        // --- Date Helpers ---
-        const getStartOfDay = (date) => {
-            const newDate = new Date(date);
-            newDate.setHours(0, 0, 0, 0);
-            return newDate;
-        };
-
+        // --- Helper Functions ---
         const dateToInputString = (date) => {
             return date.toISOString().split('T')[0];
         };
 
-        const formatDateHeader = (date) => {
-            const today = getStartOfDay(new Date());
-            const tomorrow = getStartOfDay(new Date());
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const inputDate = getStartOfDay(date);
-
-            if (inputDate.getTime() === today.getTime()) return 'Vandaag';
-            if (inputDate.getTime() === tomorrow.getTime()) return 'Morgen';
-
+        // NEW: Date formatter with Year
+        const formatEntryDate = (date) => {
             return new Intl.DateTimeFormat('nl-NL', {
-                weekday: 'long',
                 day: 'numeric',
-                month: 'long',
+                month: 'short',
+                year: 'numeric' // Added year
             }).format(date);
         };
 
@@ -303,31 +326,35 @@
             const listContainer = document.getElementById('entries-list');
             const emptyState = document.getElementById('empty-state');
 
-            // Reset visibility
             emptyState.classList.add('hidden');
             emptyState.classList.remove('flex');
             listContainer.classList.add('hidden');
 
-            // Filtering
+            // 1. Filter by Status
             let result = [...state.entries];
-            if (state.filter === 'todo') {
+            if (state.filterStatus === 'todo') {
                 result = result.filter(e => e.status === 'open');
             }
 
-            // Sorting
-            result.sort((a, b) => {
-                const dateA = new Date(a.targetDate).getTime() || new Date(a.createdAt).getTime() || 0;
-                const dateB = new Date(b.targetDate).getTime() || new Date(b.createdAt).getTime() || 0;
-                const dayA = new Date(dateA).setHours(0,0,0,0);
-                const dayB = new Date(dateB).setHours(0,0,0,0);
+            // 2. Filter by Type (New)
+            if (state.filterType !== 'all') {
+                result = result.filter(e => e.type === state.filterType);
+            }
 
-                if (dayA !== dayB) return dayA - dayB;
-                if (state.sortByPriority) {
+            // 3. Sort (Updated)
+            result.sort((a, b) => {
+                const dateA = new Date(a.targetDate).getTime() || 0;
+                const dateB = new Date(b.targetDate).getTime() || 0;
+
+                if (state.sortMode === 'priority') {
+                    // Priority Sort: Important first, then date
                     if (a.isImportant && !b.isImportant) return -1;
                     if (!a.isImportant && b.isImportant) return 1;
+                    return dateA - dateB; 
+                } else {
+                    // Date Sort: Date only
+                    return dateA - dateB;
                 }
-                // Sort newest created first if dates are same
-                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
             });
 
             if (result.length === 0) {
@@ -337,93 +364,80 @@
                 listContainer.classList.remove('hidden');
             }
 
-            // Grouping
-            const groups = {};
+            let html = '<div class="space-y-1">';
+
             result.forEach(entry => {
-                const dateVal = entry.targetDate ? entry.targetDate : (entry.createdAt ? entry.createdAt : new Date());
-                const dateKey = dateToInputString(dateVal);
-                if (!groups[dateKey]) groups[dateKey] = [];
-                groups[dateKey].push(entry);
-            });
+                const isEditing = state.editingId === entry.id;
+                const isImportant = entry.isImportant;
+                const isCompleted = entry.status === 'completed';
+                const isCancelled = entry.status === 'cancelled';
+                
+                const bgClass = isEditing ? 'bg-slate-800 shadow-xl p-4 z-20 scale-[1.02] ring-1 ring-blue-500' : 
+                                (isImportant ? 'bg-yellow-900/10 border border-yellow-600/20' : 'bg-[#1E293B] border border-transparent');
+                
+                const opacityClass = (!isEditing && (isCompleted || isCancelled)) ? 'opacity-50' : '';
 
-            // HTML Generation
-            let html = '';
-            for (const [dateKey, groupEntries] of Object.entries(groups)) {
-                html += `<div>`;
-                html += `
-                    <div class="sticky top-0 z-10 bg-[#1E293B]/90 backdrop-blur-[2px] py-2 mb-2 border-b border-slate-700/50 flex items-center gap-2">
-                        <i data-lucide="calendar" class="w-4 h-4 text-blue-400"></i>
-                        <h2 class="font-bold text-blue-200 text-sm uppercase tracking-widest">${formatDateHeader(new Date(dateKey))}</h2>
+                html += `<div id="entry-${entry.id}" class="group relative rounded-xl transition-all ${bgClass} ${opacityClass} flex items-start gap-2 p-2 -mx-2">`;
+                
+                if (isEditing) {
+                    html += `
+                    <div class="w-full space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-blue-300 uppercase">Bewerken</span>
+                            <button onclick="cancelEdit()" class="p-1 text-slate-400 hover:text-white rounded-full hover:bg-slate-700">
+                                <i data-lucide="x-circle" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <input type="text" id="edit-text" value="${state.editForm.text}" class="w-full p-2 text-lg border-b border-slate-600 focus:border-blue-400 focus:outline-none bg-transparent text-white" autofocus>
+                        <div class="flex gap-2">
+                            <input type="date" id="edit-date" value="${state.editForm.date}" class="flex-1 p-2 bg-slate-700 border border-slate-600 rounded-lg text-sm text-white focus:border-blue-400 outline-none">
+                            <div class="relative flex-1">
+                                <select id="edit-type" class="w-full p-2 appearance-none bg-slate-700 border border-slate-600 rounded-lg text-sm text-white focus:border-blue-400 outline-none">
+                                    <option value="task" ${state.editForm.type === 'task' ? 'selected' : ''}>Taak</option>
+                                    <option value="event" ${state.editForm.type === 'event' ? 'selected' : ''}>Evenement</option>
+                                    <option value="note" ${state.editForm.type === 'note' ? 'selected' : ''}>Notitie</option>
+                                </select>
+                                <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">▼</div>
+                            </div>
+                        </div>
+                        <button onclick="saveEdit('${entry.id}')" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold flex items-center justify-center gap-2">
+                            <i data-lucide="check" class="w-5 h-5"></i> Opslaan
+                        </button>
+                    </div>`;
+                } else {
+                    html += `
+                    <div class="mt-0.5 shrink-0" onclick="toggleEntryStatus('${entry.id}')">
+                        ${getStatusIconHtml(entry.id, entry.type, entry.status)}
                     </div>
-                    <div class="space-y-2">
-                `;
+                    <div class="flex-1 min-w-0 pt-2 cursor-pointer touch-manipulation" onclick="toggleEntryStatus('${entry.id}')">
+                        <p class="text-lg leading-snug break-words ${isCancelled ? 'line-through text-slate-500' : 'text-slate-200'} ${isImportant ? 'font-bold text-yellow-100' : ''}">
+                            ${entry.text}
+                        </p>
+                    </div>
+                    
+                    <!-- Date Display with Year -->
+                    <div class="shrink-0 self-center px-2">
+                        <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                            ${formatEntryDate(entry.targetDate)}
+                        </span>
+                    </div>
 
-                groupEntries.forEach(entry => {
-                    const isEditing = state.editingId === entry.id;
-                    const isImportant = entry.isImportant;
-                    const isCompleted = entry.status === 'completed';
-                    const isCancelled = entry.status === 'cancelled';
-                    
-                    const bgClass = isEditing ? 'bg-slate-800 shadow-xl p-4 z-20 scale-[1.02] ring-1 ring-blue-500' : 
-                                    (isImportant ? 'bg-yellow-900/10 border border-yellow-600/20' : 'bg-[#1E293B] border border-transparent');
-                    
-                    const opacityClass = (!isEditing && (isCompleted || isCancelled)) ? 'opacity-50' : '';
-
-                    html += `<div id="entry-${entry.id}" class="group relative rounded-xl transition-all ${bgClass} ${opacityClass} flex items-start gap-3 p-3 -mx-2">`;
-                    
-                    if (isEditing) {
-                        html += `
-                        <div class="w-full space-y-4">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs font-bold text-blue-300 uppercase">Bewerken</span>
-                                <button onclick="cancelEdit()" class="p-2 text-slate-400 hover:text-white rounded-full hover:bg-slate-700">
-                                    <i data-lucide="x-circle" class="w-5 h-5"></i>
-                                </button>
-                            </div>
-                            <input type="text" id="edit-text" value="${state.editForm.text}" class="w-full p-2 text-lg border-b border-slate-600 focus:border-blue-400 focus:outline-none bg-transparent text-white" autofocus>
-                            <div class="flex gap-2">
-                                <input type="date" id="edit-date" value="${state.editForm.date}" class="flex-1 p-3 bg-slate-700 border border-slate-600 rounded-lg text-sm text-white focus:border-blue-400 outline-none">
-                                <div class="relative flex-1">
-                                    <select id="edit-type" class="w-full p-3 appearance-none bg-slate-700 border border-slate-600 rounded-lg text-sm text-white focus:border-blue-400 outline-none">
-                                        <option value="task" ${state.editForm.type === 'task' ? 'selected' : ''}>Taak</option>
-                                        <option value="event" ${state.editForm.type === 'event' ? 'selected' : ''}>Evenement</option>
-                                        <option value="note" ${state.editForm.type === 'note' ? 'selected' : ''}>Notitie</option>
-                                    </select>
-                                    <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">▼</div>
-                                </div>
-                            </div>
-                            <button onclick="saveEdit('${entry.id}')" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold flex items-center justify-center gap-2">
-                                <i data-lucide="check" class="w-5 h-5"></i> Opslaan
-                            </button>
-                        </div>`;
-                    } else {
-                        // CHANGE HERE: Changed flex-col to flex items-center
-                        html += `
-                        <div class="mt-0.5 shrink-0" onclick="toggleEntryStatus('${entry.id}')">
-                            ${getStatusIconHtml(entry.id, entry.type, entry.status)}
-                        </div>
-                        <div class="flex-1 min-w-0 pt-2 cursor-pointer touch-manipulation" onclick="toggleEntryStatus('${entry.id}')">
-                            <p class="text-lg leading-snug break-words ${isCancelled ? 'line-through text-slate-500' : 'text-slate-200'} ${isImportant ? 'font-bold text-yellow-100' : ''}">
-                                ${entry.text}
-                            </p>
-                        </div>
-                        <div class="flex items-center gap-1 pl-2">
-                            <button onclick="toggleImportance(event, '${entry.id}')" class="p-2 rounded-full transition-colors ${isImportant ? 'text-yellow-400' : 'text-slate-600'}">
-                                <i data-lucide="star" class="w-5 h-5 ${isImportant ? 'fill-yellow-500' : ''}"></i>
-                            </button>
-                            <button onclick="startEdit(event, '${entry.id}')" class="p-2 text-slate-600 hover:text-blue-400 rounded-full">
-                                <i data-lucide="edit-2" class="w-5 h-5"></i>
-                            </button>
-                            <button onclick="deleteEntry(event, '${entry.id}')" class="p-2 text-slate-600 hover:text-red-400 rounded-full">
-                                <i data-lucide="trash-2" class="w-5 h-5"></i>
-                            </button>
-                        </div>
-                        `;
-                    }
-                    html += `</div>`;
-                });
-                html += `</div></div>`;
-            }
+                    <div class="flex items-center gap-1 pl-1">
+                        <button onclick="toggleImportance(event, '${entry.id}')" class="p-1.5 rounded-full transition-colors ${isImportant ? 'text-yellow-400' : 'text-slate-600 hover:text-yellow-200'}">
+                            <i data-lucide="star" class="w-4 h-4 ${isImportant ? 'fill-yellow-500' : ''}"></i>
+                        </button>
+                        <button onclick="startEdit(event, '${entry.id}')" class="p-1.5 text-slate-600 hover:text-blue-400 rounded-full">
+                            <i data-lucide="edit-2" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="deleteEntry(event, '${entry.id}')" class="p-1.5 text-slate-600 hover:text-red-400 rounded-full">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    `;
+                }
+                html += `</div>`;
+            });
+            html += `</div>`;
             
             listContainer.innerHTML = html;
             refreshIcons();
@@ -439,43 +453,66 @@
         }
 
         function renderControls() {
-            // Update Filter Buttons
-            const allBtn = document.getElementById('btn-filter-all');
-            const todoBtn = document.getElementById('btn-filter-todo');
+            // Update Status Filter Buttons
+            const allStatusBtn = document.getElementById('btn-status-all');
+            const todoStatusBtn = document.getElementById('btn-status-todo');
             
-            if (state.filter === 'all') {
-                allBtn.className = "px-3 py-1 rounded-md text-sm transition-colors bg-blue-600 text-white shadow";
-                todoBtn.className = "px-3 py-1 rounded-md text-sm transition-colors text-slate-400 hover:text-slate-200";
+            if (state.filterStatus === 'all') {
+                allStatusBtn.className = "px-3 py-1 rounded-md text-sm transition-colors bg-blue-600 text-white shadow";
+                todoStatusBtn.className = "px-3 py-1 rounded-md text-sm transition-colors text-slate-400 hover:text-slate-200";
             } else {
-                allBtn.className = "px-3 py-1 rounded-md text-sm transition-colors text-slate-400 hover:text-slate-200";
-                todoBtn.className = "px-3 py-1 rounded-md text-sm transition-colors bg-blue-600 text-white shadow";
+                allStatusBtn.className = "px-3 py-1 rounded-md text-sm transition-colors text-slate-400 hover:text-slate-200";
+                todoStatusBtn.className = "px-3 py-1 rounded-md text-sm transition-colors bg-blue-600 text-white shadow";
             }
 
-            // Update Sort Button
-            const sortBtn = document.getElementById('btn-sort');
-            const sortIcon = sortBtn.querySelector('svg') || sortBtn.querySelector('i');
-            
-            if (sortIcon) {
-                if (state.sortByPriority) {
-                    sortBtn.className = "p-2 rounded-lg border transition-all bg-yellow-900/30 border-yellow-600/50 text-yellow-300";
-                    sortIcon.classList.add('fill-yellow-500');
+            // Update Type Filter Buttons
+            const typeBtns = {
+                'all': document.getElementById('btn-type-all'),
+                'task': document.getElementById('btn-type-task'),
+                'event': document.getElementById('btn-type-event'),
+                'note': document.getElementById('btn-type-note')
+            };
+
+            const activeTypeClass = "flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-blue-900/40 text-blue-200 border border-blue-700/50 whitespace-nowrap shadow-sm";
+            const inactiveTypeClass = "flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700 whitespace-nowrap";
+
+            for (const [type, btn] of Object.entries(typeBtns)) {
+                if (state.filterType === type) {
+                    btn.className = activeTypeClass;
                 } else {
-                    sortBtn.className = "p-2 rounded-lg border transition-all bg-transparent border-slate-600 text-slate-400";
-                    sortIcon.classList.remove('fill-yellow-500');
+                    btn.className = inactiveTypeClass;
                 }
+            }
+
+            // Update Sort Buttons
+            const sortDateBtn = document.getElementById('btn-sort-date');
+            const sortPriorityBtn = document.getElementById('btn-sort-priority');
+            
+            if (state.sortMode === 'priority') {
+                sortPriorityBtn.className = "p-1.5 rounded-md transition-colors text-yellow-400 bg-slate-700 shadow";
+                sortDateBtn.className = "p-1.5 rounded-md transition-colors text-slate-400 hover:text-white";
+            } else {
+                sortDateBtn.className = "p-1.5 rounded-md transition-colors text-blue-400 bg-slate-700 shadow";
+                sortPriorityBtn.className = "p-1.5 rounded-md transition-colors text-slate-400 hover:text-white";
             }
         }
 
         // --- Logic Handlers ---
 
-        window.setFilter = (filter) => {
-            state.filter = filter;
+        window.setFilterStatus = (status) => {
+            state.filterStatus = status;
             renderControls();
             renderEntries();
         };
 
-        window.toggleSort = () => {
-            state.sortByPriority = !state.sortByPriority;
+        window.setFilterType = (type) => {
+            state.filterType = type;
+            renderControls();
+            renderEntries();
+        };
+
+        window.setSortMode = (mode) => {
+            state.sortMode = mode;
             renderControls();
             renderEntries();
         };
@@ -498,7 +535,6 @@
 
             let newStatus = 'open';
             if (entry.type === 'task') {
-                // Modified: Only toggle between open and completed
                 if (entry.status === 'open') newStatus = 'completed';
                 else newStatus = 'open';
             } else {
@@ -618,6 +654,7 @@
         // --- Initialization ---
         
         loadData();
+        renderControls(); // Initial controls render
         renderEntries();
         renderStats();
         refreshIcons();
