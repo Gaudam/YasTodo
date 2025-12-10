@@ -498,9 +498,8 @@
 
             let newStatus = 'open';
             if (entry.type === 'task') {
+                // Modified: Only toggle between open and completed
                 if (entry.status === 'open') newStatus = 'completed';
-                else if (entry.status === 'completed') newStatus = 'migrated';
-                else if (entry.status === 'migrated') newStatus = 'cancelled';
                 else newStatus = 'open';
             } else {
                 newStatus = entry.status === 'open' ? 'completed' : 'open';
